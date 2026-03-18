@@ -1,0 +1,77 @@
+@page
+@model WebApplication1.Pages.Orders.IndexModel
+
+<div id="orderGrid" style="height: 400px; width: 100%;" ></div>
+
+<script>
+    const myTheme = agGrid.themeQuartz.withParams({
+        backgroundColor: '#ffffff',
+        foregroundColor: '#1a1a1a',
+        headerBackgroundColor: '#faf8f5',
+        headerTextColor: '#333',
+        spacing: 10,
+        fontSize: 12,
+        headerFontSize: 14,
+    });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get("userId");
+
+    const gridOptions = {
+        theme: myTheme,
+        columnDefs: [
+            { field: "id", flex: 1 },
+            { field: "orderDate", flex: 2 },
+            {
+                headerName: "Detail",
+                cellRenderer: params => {
+                    return `<button onclick="viewDetail(${params.data.id})">View Detail</button>`;
+                }
+            }
+        ]
+    };
+
+    const gridDiv = document.getElementById('orderGrid');
+    const gridApi = agGrid.createGrid(gridDiv, gridOptions);
+
+    fetch(`/Orders?handler=OrdersByUser&userId=${userId}`)
+        .then(res => res.json())
+        .then(data => gridOptions.api.setRowData(data));
+
+    fetch('/Orders?handler=OrdersByUser&userId=${userId}')
+        .then(res => {
+            console.log("URL:", res);
+            console.log("Content-Type:", res.headers.get("content-type"));
+            return res.json();
+        })
+        .then(data => {
+            console.log("DATA:", data);
+            gridApi.setGridOption('rowData', data);
+        })
+        .catch(err => console.error("Lỗi fetch:", err));
+
+
+    function viewDetail(orderId) {
+        window.location.href = `/Orders/Detail?orderId=${orderId}`;
+    }
+</script>
+
+<div id="detailGrid" class="ag-theme-alpine" style="height: 400px;"></div>
+
+<script>
+    const orderId = new URLSearchParams(window.location.search).get("orderId");
+
+    const gridOptions = {
+        columnDefs: [
+            { field: "itemName" },
+            { field: "quantity" },
+            { field: "price" }
+        ]
+    };
+
+    new agGrid.Grid(document.getElementById('detailGrid'), gridOptions);
+
+    fetch(`/Orders?handler=OrderDetails&orderId=${orderId}`)
+        .then(res => res.json())
+        .then(data => gridOptions.api.setRowData(data));
+</script>

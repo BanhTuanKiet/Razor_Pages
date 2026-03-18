@@ -1,0 +1,124 @@
+@page
+@model WebApplication1.Pages.Users.IndexModel
+
+<div class="action-bar">
+    <button class="custom-btn btn-green" onclick="window.location.href='/Users/Add'">
+        + Add User
+    </button>
+
+    <button class="custom-btn btn-red" onclick="deleteSelectedUsers()">
+        - Delete Selected Users
+    </button>
+</div>
+
+<div id="userGrid" class="ag-theme-quartz" style="height: 500px; width: 100%;"></div>
+
+<script>
+
+    const myTheme = agGrid.themeQuartz.withParams({
+        backgroundColor: '#ffffff',
+        foregroundColor: '#1a1a1a',
+        headerBackgroundColor: '#faf8f5',
+        headerTextColor: '#333',
+        spacing: 10,
+        fontSize: 12,
+        headerFontSize: 14,
+    });
+
+    const gridOptions = {
+        theme: myTheme,
+        defaultColDef: {
+            editable: false,
+            filter: true,
+        },
+        rowSelection: {
+            mode: 'multiRow',
+        },
+        columnDefs: [
+            { field: "id", headerName: "ID", flex: 1 },
+            { field: "name", headerName: "Full Name", flex: 2 },
+            { field: "email", headerName: "Email", flex: 2 },
+            { field: "phone", headerName: "Phone Number", flex: 2 },
+            {
+                headerName: "Action",
+                flex: 2,
+                cellRenderer: params => {
+                    return `
+                        <button class="custom-btn btn-sm btn-yellow" 
+                            onclick="updateUser(${params.data.id})"
+                            style="margin-right: 5px;">
+                            Update
+                        </button>
+                `;
+                }
+            },
+            {
+                headerName: "Orders",
+                flex: 1.5,
+                cellRenderer: params => {
+                    return `
+                    <button class="custom-btn btn-sm btn-blue" 
+                        onclick="viewOrders(${params.data.id})">
+                        View Orders
+                    </button>
+                `;
+                }
+            }
+        ]
+    };
+
+    const gridDiv = document.getElementById('userGrid');
+    const gridApi = agGrid.createGrid(gridDiv, gridOptions);
+
+    // Fetch data
+    fetch('/Users?handler=Users')
+        .then(res => res.json())
+        .then(data => gridApi.setGridOption('rowData', data))
+        .catch(err => console.error("Failed to fetch data:", err));
+
+    // Navigate to user's orders
+    function viewOrders(userId) {
+        window.location.href = `/Orders?userId=${userId}`;
+    }
+
+    // Navigate to update page
+    function updateUser(userId) {
+        window.location.href = `/Users/Update/${userId}`;
+    }
+
+    // Delete selected users
+    function deleteSelectedUsers() {
+        const selectedRows = gridApi.getSelectedRows();
+
+        if (selectedRows.length === 0) {
+            alert("Please select at least one user to delete.");
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to delete ${selectedRows.length} user(s)?`)) return;
+
+        const idsToDelete = selectedRows.map(row => row.id);
+
+        fetch('/Users?handler=Delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(idsToDelete)
+        })
+            .then(res => {
+                if (!res.ok) throw new Error("Delete failed");
+                return res.json();
+            })
+            .then(data => {
+                const deletedSet = new Set(data.deletedIds);
+                const rowsToRemove = selectedRows.filter(row => deletedSet.has(row.id));
+                gridApi.applyTransaction({ remove: rowsToRemove });
+
+                const skipped = selectedRows.length - rowsToRemove.length;
+                if (skipped > 0)
+                    alert(`Deleted ${rowsToRemove.length} user(s). ${skipped} user(s) skipped because they have orders.`);
+            })
+            .catch(err => alert("Error: " + err.message));
+    }
+</script>

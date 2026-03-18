@@ -1,0 +1,147 @@
+@page
+@model WebApplication1.Pages.Items.IndexModel
+
+<style>
+    .high-price { background-color: #fff3cd !important; }
+    .low-price  { background-color: #d4edda !important; }
+    .low-stock { color: red !important }
+</style>
+
+<button onclick="showAddModal()">+ Thêm Item</button>
+
+<div id="itemGrid" style="height: 400px; width: 100%;"></div>
+
+<div id="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.5); z-index:999;">
+    <div style="background:white; margin:10% auto; padding:24px; width:400px; border-radius:8px;">
+        <h3 id="modalTitle">Thêm Item</h3>
+        <input type="hidden" id="itemId" />
+        <div>
+            <label>Tên sản phẩm</label>
+            <input id="itemName" type="text" style="width:100%; margin-bottom:8px;" />
+        </div>
+        <div>
+            <label>Giá</label>
+            <input id="itemPrice" type="number" style="width:100%; margin-bottom:8px;"/>
+        </div>
+        <div>
+            <label>Tồn kho</label>
+            <input id="itemStock" type="number" style="width:100%; margin-bottom:8px;" />
+        </div>
+        <button onclick="saveItem()">Lưu</button>
+        <button onclick="closeModal()">Hủy</button>
+    </div>
+</div>
+
+<script>
+    const myTheme = agGrid.themeQuartz.withParams({
+        backgroundColor: '#ffffff',
+        foregroundColor: '#1a1a1a',
+        headerBackgroundColor: '#faf8f5',
+        headerTextColor: '#333',
+        spacing: 10,
+        fontSize: 12,
+        headerFontSize: 14,
+    });
+
+    const gridOptions = {
+        theme: myTheme,                  // ✅ bỏ "legacy"
+        defaultColDef: { filter: true },
+        columnDefs: [
+            { field: "id", headerName: "ID", width: 80 },
+            { field: "name", headerName: "Tên sản phẩm", flex: 1 },
+            {
+                field: "price", headerName: "Giá", width: 150,
+                valueFormatter: p => p.value?.toLocaleString('en-US') + ' USD'
+            },
+            { field: "stock", headerName: "Tồn kho", width: 120 },
+            {
+                headerName: "Thao tác", width: 180,
+                cellRenderer: params => `
+                    <button onclick="showEditModal(${params.data.id}, '${params.data.name}',
+                        ${params.data.price}, ${params.data.stock})">Sửa</button>
+                    <button onclick="deleteItem(${params.data.id})"
+                        style="color:red; margin-left:4px;">Xóa</button>
+                `
+            }
+        ],
+        rowClassRules: {
+            'high-price': params => params.data?.price > 10000, 
+            'low-price': params => params.data?.price <= 10000,
+            'low-stock': params => params.data?.stock <= 10
+        },
+    };
+
+    const gridApi = agGrid.createGrid(document.getElementById('itemGrid'), gridOptions);
+
+    function loadItems() {
+        fetch('/Items?handler=All')
+            .then(res => res.json())
+            .then(data => gridApi.setGridOption('rowData', data))
+            .catch(err => console.error("Lỗi load items:", err));
+    }
+
+    loadItems();
+
+    function showAddModal() {
+        document.getElementById('modalTitle').innerText = 'Thêm Item';
+        document.getElementById('itemId').value = '';
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemPrice').value = '';
+        document.getElementById('itemStock').value = '';
+        document.getElementById('modal').style.display = 'block';
+    }
+
+    function showEditModal(id, name, price, stock) {
+        document.getElementById('modalTitle').innerText = 'Sửa Item';
+        document.getElementById('itemId').value = id;
+        document.getElementById('itemName').value = name;
+        document.getElementById('itemPrice').value = price;
+        document.getElementById('itemStock').value = stock;
+        document.getElementById('modal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+    }
+
+    function saveItem() {
+        const id = document.getElementById('itemId').value;
+        const payload = {
+            name: document.getElementById('itemName').value,
+            price: parseFloat(document.getElementById('itemPrice').value),
+            stock: parseInt(document.getElementById('itemStock').value)
+        };
+
+        // ✅ Validate trước khi gửi
+        if (!payload.name || isNaN(payload.price) || isNaN(payload.stock)) {
+            alert("Vui lòng điền đầy đủ thông tin!");
+            return;
+        }
+
+        const isEdit = id !== '';
+        const url = isEdit ? `/Items?handler=Update&id=${id}` : '/Items?handler=Create';
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) { closeModal(); loadItems(); }
+                else alert("Lỗi: " + result.error);
+            })
+            .catch(err => console.error("Lỗi save:", err));
+    }
+
+    function deleteItem(id) {
+        if (!confirm("Xóa item này?")) return;
+        fetch(`/Items?handler=Delete&id=${id}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) loadItems();
+                else alert("Lỗi: " + result.error);
+            });
+    }
+</script>
