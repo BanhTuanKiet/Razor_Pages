@@ -1,7 +1,23 @@
 @page
 @model WebApplication1.Pages.Orders.IndexModel
 
-<div id="orderGrid" style="height: 400px; width: 100%;" ></div>
+<div class="action-bar">
+    @{
+        var uid = Request.Query["userId"].FirstOrDefault();
+    }
+    @if (!string.IsNullOrEmpty(uid))
+    {
+        <span style="font-size:13px; color:var(--text-muted,#7a7670);
+            font-family:'DM Mono',monospace; padding: 6px 0;">
+            Showing orders for user #@uid
+        </span>
+        <button class="custom-btn" style="background:#f0ede8; color:#1a1a18;"    onclick="window.location.href='/Orders'">
+            Clear filter
+        </button>
+    }
+</div>
+
+<div id="orderGrid" style="height: 400px; width: 100%;"></div>
 
 <script>
     const myTheme = agGrid.themeQuartz.withParams({
@@ -17,61 +33,145 @@
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get("userId");
 
+    const PAGE_SIZE = 10;
+    let currentPage = 0;
+
     const gridOptions = {
         theme: myTheme,
+        defaultColDef: { filter: true },
+        alwaysMultiSort: true,
         columnDefs: [
-            { field: "id", flex: 1 },
-            { field: "orderDate", flex: 2 },
+            {
+                field: "id",
+                headerName: "ID",
+                flex: 1,
+                filter: false
+            },
+            {
+                field: "orderDate",
+                headerName: "Order Date",
+                flex: 2
+            },
+            {
+                field: "user.name",
+                headerName: "Customer",
+                flex: 2,
+                valueFormatter: p => p.value ?? "—"
+            },
+            {
+                field: "user.email",
+                headerName: "Email",
+                flex: 2,
+                valueFormatter: p => p.value ?? "—"
+            },
             {
                 headerName: "Detail",
+                flex: 1,
+                filter: false,
+                sortable: false,
                 cellRenderer: params => {
-                    return `<button onclick="viewDetail(${params.data.id})">View Detail</button>`;
+                    return `<button class="custom-btn btn-sm btn-blue"
+                                onclick="viewDetail(${params.data.id})">
+                                View Detail
+                            </button>`;
                 }
             }
-        ]
+        ],
+        onFilterChanged: () => {
+            currentPage = 0;        // reset về trang đầu khi filter
+            loadOrdersDebounced();
+        },
+        onSortChanged: () => {
+            loadOrdersDebounced();
+        }
     };
 
-    const gridDiv = document.getElementById('orderGrid');
-    const gridApi = agGrid.createGrid(gridDiv, gridOptions);
+    const gridApi = agGrid.createGrid(document.getElementById('orderGrid'), gridOptions);
 
-    fetch(`/Orders?handler=OrdersByUser&userId=${userId}`)
-        .then(res => res.json())
-        .then(data => gridOptions.api.setRowData(data));
+    function loadOrders() {
+        const filterModel = gridApi.getFilterModel();
+        const sortModel = gridApi.getColumnState()
+            .filter(col => col.sort != null)
+            .sort((a, b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0))
+            .map(col => ({ colId: col.colId, sort: col.sort }));
 
-    fetch('/Orders?handler=OrdersByUser&userId=${userId}')
-        .then(res => {
-            console.log("URL:", res);
-            console.log("Content-Type:", res.headers.get("content-type"));
-            return res.json();
+        const base = userId
+            ? `/Orders?handler=Orders&userId=${userId}`
+            : `/Orders?handler=Orders`;
+
+        fetch(base, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filters: filterModel,
+                sorts: sortModel,
+                page: currentPage,
+                pageSize: PAGE_SIZE
+            })
         })
-        .then(data => {
-            console.log("DATA:", data);
-            gridApi.setGridOption('rowData', data);
-        })
-        .catch(err => console.error("Lỗi fetch:", err));
+            .then(res => res.json())
+            .then(({ data, totalCount, totalPages }) => {
+                gridApi.setGridOption('rowData', data);
+                renderPagination(totalCount, totalPages);
+            })
+            .catch(err => console.error("Lỗi fetch orders:", err));
+    }
 
+    function renderPagination(totalCount, totalPages) {
+        document.getElementById('pagination')?.remove();
+
+        const bar = document.createElement('div');
+        bar.id = 'pagination';
+        bar.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:12px;';
+
+        const info = document.createElement('span');
+        info.style.cssText = 'font-size:13px; color:var(--text-muted,#7a7670);'
+            + 'font-family:"DM Mono",monospace; margin-right:auto;';
+        info.textContent = `${totalCount} records · page ${currentPage + 1} of ${totalPages || 1}`;
+        bar.appendChild(info);
+
+        const prev = document.createElement('button');
+        prev.textContent = '← Prev';
+        prev.className = 'custom-btn btn-sm';
+        prev.style.cssText = 'background:#f0ede8; color:#1a1a18;';
+        prev.disabled = currentPage === 0;
+        prev.onclick = () => { currentPage--; loadOrders(); };
+        bar.appendChild(prev);
+
+        const start = Math.max(0, currentPage - 2);
+        const end = Math.min((totalPages || 1) - 1, currentPage + 2);
+
+        for (let i = start; i <= end; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i + 1;
+            btn.className = 'custom-btn btn-sm';
+            btn.style.cssText = i === currentPage
+                ? 'background:#1a1a18; color:#fff;'
+                : 'background:#f0ede8; color:#1a1a18;';
+            btn.onclick = () => { currentPage = i; loadOrders(); };
+            bar.appendChild(btn);
+        }
+
+        const next = document.createElement('button');
+        next.textContent = 'Next →';
+        next.className = 'custom-btn btn-sm';
+        next.style.cssText = 'background:#f0ede8; color:#1a1a18;';
+        next.disabled = currentPage >= (totalPages || 1) - 1;
+        next.onclick = () => { currentPage++; loadOrders(); };
+        bar.appendChild(next);
+
+        document.getElementById('orderGrid').after(bar);
+    }
+
+    let debounceTimeout;
+    function loadOrdersDebounced() {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(loadOrders, 300);
+    }
+
+    loadOrders();
 
     function viewDetail(orderId) {
         window.location.href = `/Orders/Detail?orderId=${orderId}`;
     }
-</script>
-
-<div id="detailGrid" class="ag-theme-alpine" style="height: 400px;"></div>
-
-<script>
-    const orderId = new URLSearchParams(window.location.search).get("orderId");
-
-    const gridOptions = {
-        columnDefs: [
-            { field: "itemName" },
-            { field: "quantity" },
-            { field: "price" }
-        ]
-    };
-
-    new agGrid.Grid(document.getElementById('detailGrid'), gridOptions);
-
-    fetch(`/Orders?handler=OrderDetails&orderId=${orderId}`)
-        .then(res => res.json())
-        .then(data => gridOptions.api.setRowData(data));
 </script>

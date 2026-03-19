@@ -14,6 +14,8 @@
 <div id="userGrid" class="ag-theme-quartz" style="height: 500px; width: 100%;"></div>
 
 <script>
+    const PAGE_SIZE = 10;
+    let currentPage = 0;
 
     const myTheme = agGrid.themeQuartz.withParams({
         backgroundColor: '#ffffff',
@@ -34,14 +36,22 @@
         rowSelection: {
             mode: 'multiRow',
         },
+        multiSortKey: 'shift',
         columnDefs: [
-            { field: "id", headerName: "ID", flex: 1 },
+            {
+                field: "id",
+                headerName: "ID",
+                flex: 1,
+                filter: false
+            },
             { field: "name", headerName: "Full Name", flex: 2 },
             { field: "email", headerName: "Email", flex: 2 },
             { field: "phone", headerName: "Phone Number", flex: 2 },
             {
                 headerName: "Action",
                 flex: 2,
+                filter: false,
+                sortable: false,
                 cellRenderer: params => {
                     return `
                         <button class="custom-btn btn-sm btn-yellow" 
@@ -55,6 +65,8 @@
             {
                 headerName: "Orders",
                 flex: 1.5,
+                filter: false,
+                sortable: false,
                 cellRenderer: params => {
                     return `
                     <button class="custom-btn btn-sm btn-blue" 
@@ -64,17 +76,59 @@
                 `;
                 }
             }
-        ]
+        ],
+        onFilterChanged: () => {
+            currentPage = 0;
+            loadUsersDebounced()
+        },
+        onSortChanged: () => {
+            loadUsersDebounced()
+        }
     };
 
     const gridDiv = document.getElementById('userGrid');
     const gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
     // Fetch data
-    fetch('/Users?handler=Users')
-        .then(res => res.json())
-        .then(data => gridApi.setGridOption('rowData', data))
-        .catch(err => console.error("Failed to fetch data:", err));
+    function loadUsers() {
+        const filterModel = gridApi.getFilterModel();
+        const sortModel = gridApi.getColumnState()
+            .filter(col => col.sort != null)
+            .sort((a, b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0))
+            .map(col => ({ key: col.colId, sort: col.sort }));
+
+        console.log(sortModel)
+
+        fetch('/Users?handler=Users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                filters: filterModel,
+                sorts: sortModel,
+                page: currentPage,
+                pageSize: PAGE_SIZE
+            }),
+        })
+            .then(res => res.json())
+            .then(({ data, totalCount, totalPages }) => {
+                renderPagination(totalCount, totalPages);
+                gridApi.setGridOption('rowData', data);
+            })
+            .catch(err => console.error("Failed to fetch data:", err));
+    }
+
+    let debounceTimeout;
+
+    function loadUsersDebounced() {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+            loadUsers();
+        }, 300);
+    }
+
+    loadUsers()
 
     // Navigate to user's orders
     function viewOrders(userId) {
@@ -120,5 +174,54 @@
                     alert(`Deleted ${rowsToRemove.length} user(s). ${skipped} user(s) skipped because they have orders.`);
             })
             .catch(err => alert("Error: " + err.message));
+    }
+
+    function renderPagination(totalCount, totalPages) {
+        // Xóa pagination cũ nếu có
+        document.getElementById('pagination')?.remove();
+
+        const bar = document.createElement('div');
+        bar.id = 'pagination';
+        bar.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:12px;';
+
+        const info = document.createElement('span');
+        info.style.cssText = 'font-size:13px; color:var(--text-muted); font-family:"DM Mono",monospace; margin-right:auto;';
+        info.textContent = `${totalCount} records · page ${currentPage + 1} of ${totalPages}`;
+        bar.appendChild(info);
+
+        // Nút Prev
+        const prev = document.createElement('button');
+        prev.textContent = '← Prev';
+        prev.className = 'custom-btn btn-sm';
+        prev.style.cssText = 'background:#f0ede8; color:var(--text);';
+        prev.disabled = currentPage === 0;
+        prev.onclick = () => { currentPage--; loadUsers(); };
+        bar.appendChild(prev);
+
+        // Số trang
+        const start = Math.max(0, currentPage - 2);
+        const end = Math.min(totalPages - 1, currentPage + 2);
+
+        for (let i = start; i <= end; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i + 1;
+            btn.className = 'custom-btn btn-sm';
+            btn.style.cssText = i === currentPage
+                ? 'background:var(--text); color:#fff;'
+                : 'background:#f0ede8; color:var(--text);';
+            btn.onclick = () => { currentPage = i; loadUsers(); };
+            bar.appendChild(btn);
+        }
+
+        // Nút Next
+        const next = document.createElement('button');
+        next.textContent = 'Next →';
+        next.className = 'custom-btn btn-sm';
+        next.style.cssText = 'background:#f0ede8; color:var(--text);';
+        next.disabled = currentPage >= totalPages - 1;
+        next.onclick = () => { currentPage++; loadUsers(); };
+        bar.appendChild(next);
+
+        document.getElementById('userGrid').after(bar);
     }
 </script>

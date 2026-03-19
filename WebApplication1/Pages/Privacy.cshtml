@@ -1,8 +1,347 @@
 ﻿@page
 @model PrivacyModel
 @{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Privacy";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<style>
+    .privacy-hero {
+        padding: 32px 0 28px;
+        border-bottom: 1px solid #e8e4dc;
+    }
+
+    .privacy-hero h1 {
+        font-size: 26px;
+        font-weight: 600;
+        color: #1a1a18;
+        margin-bottom: 6px;
+    }
+
+    .privacy-hero p {
+        font-size: 13px;
+        color: #7a7670;
+        font-family: 'DM Mono', monospace;
+    }
+
+    .privacy-layout {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: 40px;
+        margin-top: 40px;
+        align-items: start;
+    }
+
+    .privacy-toc {
+        position: sticky;
+        top: 70px;
+    }
+
+    .toc-label {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #7a7670;
+        font-family: 'DM Mono', monospace;
+        margin-bottom: 10px;
+    }
+
+    .toc-link {
+        display: block;
+        font-size: 13px;
+        color: #7a7670;
+        text-decoration: none;
+        padding: 6px 10px;
+        border-radius: 6px;
+        border-left: 2px solid transparent;
+        transition: color 0.15s, border-color 0.15s, background 0.15s;
+        line-height: 1.4;
+    }
+
+    .toc-link:hover {
+        color: #1a1a18;
+        background: #f5f4f0;
+    }
+
+    .toc-link.active {
+        color: #1a1a18;
+        border-left-color: #c9b99a;
+        background: #f5f4f0;
+        font-weight: 500;
+    }
+
+    .privacy-content section {
+        margin-bottom: 40px;
+        scroll-margin-top: 70px;
+    }
+
+    .privacy-content h2 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1a1a18;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-badge {
+        font-size: 10px;
+        font-family: 'DM Mono', monospace;
+        padding: 2px 8px;
+        border-radius: 20px;
+        background: #f0ede8;
+        color: #7a6f5e;
+        font-weight: 400;
+    }
+
+    .privacy-content p {
+        font-size: 14px;
+        color: #4a4845;
+        line-height: 1.75;
+        margin-bottom: 10px;
+    }
+
+    .privacy-content ul {
+        margin: 10px 0 10px 0;
+        padding-left: 0;
+        list-style: none;
+    }
+
+    .privacy-content ul li {
+        font-size: 14px;
+        color: #4a4845;
+        line-height: 1.7;
+        padding: 4px 0 4px 18px;
+        position: relative;
+    }
+
+    .privacy-content ul li::before {
+        content: '';
+        position: absolute;
+        left: 4px;
+        top: 13px;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #c9b99a;
+    }
+
+    .info-box {
+        background: #f5f4f0;
+        border: 1px solid #e8e4dc;
+        border-left: 3px solid #c9b99a;
+        border-radius: 0 6px 6px 0;
+        padding: 14px 16px;
+        margin: 16px 0;
+    }
+
+    .info-box p {
+        margin: 0;
+        font-size: 13px;
+        color: #5a5652;
+    }
+
+    .contact-card {
+        background: #ffffff;
+        border: 1px solid #e8e4dc;
+        border-radius: 8px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .contact-icon {
+        width: 40px;
+        height: 40px;
+        background: #f0ede8;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+    }
+
+    .contact-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .updated-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-family: 'DM Mono', monospace;
+        padding: 4px 10px;
+        background: #f0ede8;
+        color: #7a6f5e;
+        border-radius: 20px;
+        margin-top: 6px;
+    }
+
+    .updated-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #4caf82;
+    }
+
+    @@media (max-width: 640px) {
+        .privacy-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .privacy-toc {
+            display: none;
+        }
+    }
+</style>
+
+<div class="privacy-hero">
+    <h1>Privacy Policy</h1>
+    <p>Last reviewed · January 2026</p>
+    <div class="updated-chip">
+        <div class="updated-dot"></div>
+        Current & in effect
+    </div>
+</div>
+
+<div class="privacy-layout">
+
+    <!-- Table of contents -->
+    <nav class="privacy-toc">
+        <p class="toc-label">Contents</p>
+        <a class="toc-link" href="#collection">Data collection</a>
+        <a class="toc-link" href="#usage">How we use data</a>
+        <a class="toc-link" href="#storage">Storage & security</a>
+        <a class="toc-link" href="#sharing">Third parties</a>
+        <a class="toc-link" href="#rights">Your rights</a>
+        <a class="toc-link" href="#cookies">Cookies</a>
+        <a class="toc-link" href="#contact">Contact</a>
+    </nav>
+
+    <!-- Main content -->
+    <div class="privacy-content">
+
+        <section id="collection">
+            <h2>Data collection <span class="section-badge">01</span></h2>
+            <p>
+                This application collects only the information necessary to provide its core services.
+                When you create an account or place an order, we may collect the following:
+            </p>
+            <ul>
+                <li>Full name and contact details (email address, phone number)</li>
+                <li>Order history and associated item data</li>
+                <li>Usage metadata such as login timestamps and session activity</li>
+            </ul>
+            <div class="info-box">
+                <p>We do not collect payment card data directly. Any payment processing is handled by a certified
+                    third-party provider.</p>
+                </div>
+            </section>
+
+            <section id="usage">
+                <h2>How we use data <span class="section-badge">02</span></h2>
+                <p>Collected information is used solely for the following purposes:</p>
+                <ul>
+                    <li>Authenticating users and maintaining session security</li>
+                    <li>Processing and fulfilling orders placed within the application</li>
+                    <li>Providing customer support and responding to enquiries</li>
+                    <li>Improving application performance through aggregated, anonymised analytics</li>
+                </ul>
+            </section>
+
+            <section id="storage">
+                <h2>Storage & security <span class="section-badge">03</span></h2>
+                <p>
+                    All data is stored in a secured database with access restricted to authorised
+                    application services only. Sensitive fields are encrypted at rest.
+                </p>
+                <p>
+                    We retain personal data only for as long as necessary to fulfil the purposes
+                    outlined in this policy, or as required by applicable law.
+                </p>
+            </section>
+
+            <section id="sharing">
+                <h2>Third parties <span class="section-badge">04</span></h2>
+                <p>
+                    We do not sell, trade, or rent personal data to third parties.
+                    Data may be shared only in the following limited circumstances:
+                </p>
+                <ul>
+                    <li>With service providers acting on our behalf under strict data processing agreements</li>
+                    <li>When required by law, regulation, or valid legal process</li>
+                    <li>To protect the rights, property, or safety of the application and its users</li>
+                </ul>
+            </section>
+
+            <section id="rights">
+                <h2>Your rights <span class="section-badge">05</span></h2>
+                <p>You have the right to:</p>
+                <ul>
+                    <li>Access the personal data we hold about you</li>
+                    <li>Request correction of inaccurate or incomplete data</li>
+                    <li>Request deletion of your data, subject to legal retention requirements</li>
+                    <li>Object to or restrict certain types of processing</li>
+                </ul>
+                <p>
+                    To exercise any of these rights, please contact us using the details in the
+                    section below. We will respond within 30 days.
+                </p>
+            </section>
+
+            <section id="cookies">
+                <h2>Cookies <span class="section-badge">06</span></h2>
+                <p>
+                    This application uses only essential cookies required for session management
+                    and security (e.g. anti-forgery tokens). No tracking or advertising cookies
+                    are used.
+                </p>
+            </section>
+
+            <section id="contact">
+                <h2>Contact <span class="section-badge">07</span></h2>
+                <p>
+                    If you have any questions about this policy or how your data is handled,
+                    please reach out to the application administrator.
+                </p>
+                <div class="contact-card">
+                    <div class="contact-icon">
+                        <svg viewBox="0 0 20 20" fill="#7a6f5e">
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size:14px; font-weight:600; color:#1a1a18; margin-bottom:2px;">
+                            Application Administrator
+                        </div>
+                        <div style="font-size:13px; color:#7a7670; font-family:'DM Mono',monospace;">
+                            admin@webapplication1.local
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script>
+        // Highlight active TOC link on scroll
+        const sections = document.querySelectorAll('.privacy-content section');
+        const links = document.querySelectorAll('.toc-link');
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    links.forEach(l => l.classList.remove('active'));
+                    const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+                    if (active) active.classList.add('active');
+                }
+            });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+
+        sections.forEach(s => observer.observe(s));
+    </script>

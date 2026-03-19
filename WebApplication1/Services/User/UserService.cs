@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.DTOs;
+using WebApplication1.Helpers;
 using WebApplication1.Services.User;
 
 namespace WebApplication1.Services
@@ -15,9 +17,17 @@ namespace WebApplication1.Services
             _context = context;
         }
 
-        public List<UserDto.UserBase> GetUsers()
+        public async Task<FilterDto.PagedResult<UserDto.UserBase>> GetUsers(FilterDto.AgGridRequest agGridRequest)
         {
-            return _context.Users
+            var query = _context.Users.AsQueryable();
+
+            query = FilterHelper.ApplyFilters(query, agGridRequest.Filters);
+
+             var totalCount = await query.CountAsync();
+
+            var data = await query
+                .Skip(agGridRequest.Page * agGridRequest.PageSize)
+                .Take(agGridRequest.PageSize)
                 .Select(u => new UserDto.UserBase
                 {
                     Id = u.Id,
@@ -25,7 +35,14 @@ namespace WebApplication1.Services
                     Email = u.Email,
                     Phone = u.Phone
                 })
-                .ToList();
+                .ToListAsync();
+
+            return new FilterDto.PagedResult<UserDto.UserBase>
+            {
+                Data = data,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling((double)totalCount / agGridRequest.PageSize)
+            };
         }
 
         public UserDto.AddUser AddUser(UserDto.AddUser user)
@@ -88,7 +105,7 @@ namespace WebApplication1.Services
 
             _context.Users.RemoveRange(usersToDelete);
             _context.SaveChanges();
-        
+
             return usersToDelete.Select(u => u.Id).ToList();
         }
     }

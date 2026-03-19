@@ -5,7 +5,7 @@ namespace WebApplication1.Services.User
 {
     public interface IUserService
     {
-        List<UserDto.UserBase> GetUsers();
+        Task<FilterDto.PagedResult<UserDto.UserBase>> GetUsers(FilterDto.AgGridRequest filterRequest);
         UserDto.AddUser AddUser(UserDto.AddUser user);
         UserDto.EditUser? GetUserById(int id);
         UserDto.EditUser UpdateUser(UserDto.EditUser user);

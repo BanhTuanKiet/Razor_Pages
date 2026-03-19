@@ -1,0 +1,48 @@
+@page
+@model WebApplication1.Pages.Items.EditModel
+
+<style>
+    /* (giống Add.cshtml, copy lại style block) */
+    .form-container { max-width: 600px; margin: 0 auto; background: #ffffff;
+        padding: 30px; border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; }
+    .form-group  { margin-bottom: 20px; }
+    .form-label  { display: block; font-weight: 500; margin-bottom: 8px; color: #374151; }
+    .form-control { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db;
+        border-radius: 6px; font-size: 14px; }
+    .form-control:focus { outline: none; border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+    .text-danger { color: #ef4444; font-size: 12px; margin-top: 5px; display: block; }
+</style>
+
+<div class="form-container">
+    <h2 style="margin-bottom: 20px; color: #111827;">Edit Item</h2>
+
+    <form method="post" asp-page-handler="Item">
+        <input type="hidden" asp-for="EditItem.Id" />
+
+        <div class="form-group">
+            <label class="form-label" asp-for="EditItem.Name">Name</label>
+            <input class="form-control" asp-for="EditItem.Name" />
+            <span class="text-danger" asp-validation-for="EditItem.Name"></span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" asp-for="EditItem.Price">Price (USD)</label>
+            <input class="form-control" type="number" step="0.01" asp-for="EditItem.Price" />
+            <span class="text-danger" asp-validation-for="EditItem.Price"></span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" asp-for="EditItem.Stock">Stock</label>
+            <input class="form-control" type="number" asp-for="EditItem.Stock" />
+            <span class="text-danger" asp-validation-for="EditItem.Stock"></span>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 30px;">
+            <button type="submit" class="custom-btn btn-green">Update Item</button>
+            <button type="button" class="custom-btn btn-red"
+                    onclick="window.history.back()">Cancel</button>
+        </div>
+    </form>
+</div>

@@ -15,11 +15,11 @@ namespace WebApplication1.Pages.Users
             _userService = userService;
         }
 
-        public IActionResult OnGetUsers()
+        public async Task<IActionResult> OnPostUsers([FromBody] FilterDto.AgGridRequest filterRequest)
         {
             try
             {
-                var users = _userService.GetUsers();
+                var users = await _userService.GetUsers(filterRequest);
 
                 return new JsonResult(users);
             }
