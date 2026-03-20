@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.DTOs;
 using WebApplication1.Helpers;
+using WebApplication1.Models;
 using WebApplication1.Services.Item;
 
 namespace WebApplication1.Services

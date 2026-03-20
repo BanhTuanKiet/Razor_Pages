@@ -32,7 +32,7 @@ namespace WebApplication1.Pages.Users
             }
         }
 
-        public IActionResult OnPostDelete([FromBody] List<int> ids)
+        public IActionResult OnPostDelete([FromBody] List<string> ids)
         {
             if (ids == null || ids.Count == 0)
                 return BadRequest(new { message = "No IDs provided" });

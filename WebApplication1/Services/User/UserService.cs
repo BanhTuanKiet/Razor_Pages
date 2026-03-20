@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.DTOs;
 using WebApplication1.Helpers;
+using WebApplication1.Models;
 using WebApplication1.Services.User;
 
 namespace WebApplication1.Services
@@ -32,8 +33,8 @@ namespace WebApplication1.Services
                 {
                     Id = u.Id,
                     Name = u.Name,
-                    Email = u.Email,
-                    Phone = u.Phone
+                    Email = u.Email!,
+                    PhoneNumber = u.PhoneNumber!
                 })
                 .ToListAsync();
 
@@ -47,11 +48,11 @@ namespace WebApplication1.Services
 
         public UserDto.AddUser AddUser(UserDto.AddUser user)
         {
-            var newUser = new Models.User
+            var newUser = new Models.ApplicationUser
             {
                 Name = user.Name,
                 Email = user.Email,
-                Phone = user.Phone
+                PhoneNumber = user.PhoneNumber
             };
 
             _context.Users.Add(newUser);
@@ -60,7 +61,7 @@ namespace WebApplication1.Services
             return user;
         }
 
-        public UserDto.EditUser? GetUserById(int id)
+        public UserDto.EditUser? GetUserById(string id)
         {
             var user = _context.Users.FirstOrDefault(u => u.Id == id);
 
@@ -70,8 +71,8 @@ namespace WebApplication1.Services
             {
                 Id = user.Id,
                 Name = user.Name,
-                Email = user.Email,
-                Phone = user.Phone
+                Email = user.Email!,
+                PhoneNumber = user.PhoneNumber!
             };
         }
 
@@ -82,14 +83,14 @@ namespace WebApplication1.Services
 
             user.Name = dto.Name;
             user.Email = dto.Email;
-            user.Phone = dto.Phone;
+            user.PhoneNumber = dto.PhoneNumber;
 
             _context.SaveChanges();
 
             return dto;
         }
 
-        public List<int> DeleteUsers(List<int> ids)
+        public List<string> DeleteUsers(List<string> ids)
         {
             var users = _context.Users
                 .Where(u => ids.Contains(u.Id))

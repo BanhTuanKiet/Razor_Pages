@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using WebApplication1.Models;
 using WebApplication1.Services;
 using WebApplication1.Services.Item;
 using WebApplication1.Services.Order;
@@ -20,11 +22,14 @@ namespace server.Configs
                 )
             );
 
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
 
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IItemService, ItemService>();
             services.AddScoped<IOrderServcie, OrderService>();
-            
+
         }
     }
 }

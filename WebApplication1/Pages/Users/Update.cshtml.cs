@@ -18,7 +18,7 @@ namespace WebApplication1.Pages.Users
         public UserDto.EditUser EditUser { get; set; } = new();
 
         // GET: /Users/Update/5
-        public IActionResult OnGet(int id)
+        public IActionResult OnGet(string id)
         {
             var user = _userService.GetUserById(id);
 
@@ -31,7 +31,7 @@ namespace WebApplication1.Pages.Users
                 Id = user.Id,
                 Name = user.Name,
                 Email = user.Email,
-                Phone = user.Phone
+                PhoneNumber = user.PhoneNumber
             };
 
             return Page();

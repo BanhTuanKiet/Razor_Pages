@@ -26,8 +26,8 @@ namespace WebApplication1.Pages.Orders
         public async Task<JsonResult> OnPostOrders([FromBody] FilterDto.AgGridRequest request)
         {
             var userId = Request.Query.ContainsKey("userId")
-                ? int.Parse(Request.Query["userId"]!)
-                : (int?)null;
+                ? Request.Query["userId"].ToString()
+                : null;
 
             var result = await _orderService.GetOrders(request, userId);
             return new JsonResult(result);

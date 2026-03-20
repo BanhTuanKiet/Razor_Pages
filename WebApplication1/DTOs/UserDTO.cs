@@ -7,10 +7,10 @@ namespace WebApplication1.DTOs
     {
         public class UserBase
         {
-            public int Id { get; set; }
+            public string Id { get; set; } = string.Empty;
             public string Name { get; set; } = string.Empty;
             public string Email { get; set; } = string.Empty;
-            public string Phone { get; set; } = string.Empty;
+            public string PhoneNumber { get; set; } = string.Empty;
         }
 
         public class AddUser
@@ -25,13 +25,13 @@ namespace WebApplication1.DTOs
 
             [Required(ErrorMessage = "Phone number cannot be blank")]
             [RegularExpression(@"^(0|\+84)[0-9]{9}$", ErrorMessage = "Invalid phone number")]
-            public string Phone { get; set; } = string.Empty;
+            public string PhoneNumber { get; set; } = string.Empty;
         }
 
         public class EditUser : AddUser
         {
             [Required(ErrorMessage = "Id is required")]
-            public int Id { get; set; }
+            public string Id { get; set; } = string.Empty;
         }
     }
 }

@@ -1,9 +1,7 @@
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.DTOs;
 using WebApplication1.Helpers;
-using WebApplication1.Services.Item;
+using WebApplication1.Models;
 using WebApplication1.Services.Order;
 
 namespace WebApplication1.Services
@@ -31,14 +29,14 @@ namespace WebApplication1.Services
 
         public async Task<FilterDto.PagedResult<OrderDto.OrderBase>> GetOrders(
             FilterDto.AgGridRequest request,
-            int? userId = null)
+            string? userId = null)
         {
             var query = _context.Orders
                 .Include(o => o.User)
                 .AsQueryable();
 
-            if (userId.HasValue)
-                query = query.Where(o => o.UserId == userId.Value);
+            if (!string.IsNullOrEmpty(userId))
+                query = query.Where(o => o.UserId == userId);
 
             query = FilterHelper.ApplyFilters(query, request.Filters);
             query = FilterHelper.ApplySorts(query, request.Sorts);
@@ -56,8 +54,8 @@ namespace WebApplication1.Services
                     {
                         Id = o.User.Id,
                         Name = o.User.Name,
-                        Email = o.User.Email,
-                        Phone = o.User.Phone
+                        Email = o.User.Email!,
+                        PhoneNumber = o.User.PhoneNumber!
                     }
                 })
                 .ToListAsync();

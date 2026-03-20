@@ -7,8 +7,8 @@ namespace WebApplication1.Services.User
     {
         Task<FilterDto.PagedResult<UserDto.UserBase>> GetUsers(FilterDto.AgGridRequest filterRequest);
         UserDto.AddUser AddUser(UserDto.AddUser user);
-        UserDto.EditUser? GetUserById(int id);
+        UserDto.EditUser? GetUserById(string id);
         UserDto.EditUser UpdateUser(UserDto.EditUser user);
-        List<int> DeleteUsers(List<int> ids);
+        List<string> DeleteUsers(List<string> ids);
     }
 }
